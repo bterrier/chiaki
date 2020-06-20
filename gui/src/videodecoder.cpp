@@ -133,7 +133,6 @@ AVFrame *VideoDecoder::PullFrame()
 
 	// always try to pull as much as possible and return only the very last frame
 	AVFrame *frame_last = nullptr;
-	AVFrame *sw_frame = nullptr;
 	AVFrame *frame = nullptr; 
 	while(true)
 	{
@@ -168,10 +167,7 @@ AVFrame *VideoDecoder::PullFrame()
 
 AVFrame *VideoDecoder::GetFromHardware(AVFrame *hw_frame)
 {
-	AVFrame *frame;
-	AVFrame *sw_frame;
-
-	sw_frame = av_frame_alloc();
+	AVFrame *sw_frame = av_frame_alloc();
 
 	int ret = av_hwframe_transfer_data(sw_frame, hw_frame, 0);
 
