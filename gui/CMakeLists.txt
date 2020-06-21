@@ -60,6 +60,8 @@ add_executable(chiaki WIN32
 		src/registdialog.cpp
 		include/host.h
 		src/host.cpp
+		include/settingsgamepadcapturedialog.h
+		src/settingsgamepadcapturedialog.cpp
 		include/settingskeycapturedialog.h
 		src/settingskeycapturedialog.cpp
 		include/settingsdialog.h

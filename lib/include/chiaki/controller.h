@@ -29,6 +29,7 @@ extern "C" {
 
 typedef enum chiaki_controller_button_t
 {
+	CHIAKI_CONTROLLER_BUTTON_NONE		= 0,
 	CHIAKI_CONTROLLER_BUTTON_CROSS 		= (1 << 0),
 	CHIAKI_CONTROLLER_BUTTON_MOON 		= (1 << 1),
 	CHIAKI_CONTROLLER_BUTTON_BOX 		= (1 << 2),

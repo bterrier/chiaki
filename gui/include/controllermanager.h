@@ -48,7 +48,7 @@ class ControllerManager : public QObject
 	private slots:
 		void UpdateAvailableControllers();
 		void HandleEvents();
-		void ControllerEvent(int device_id);
+		void ControllerEvent(SDL_ControllerButtonEvent event);
 
 	public:
 		static ControllerManager *GetInstance();
@@ -73,9 +73,12 @@ class Controller : public QObject
 		Controller(int device_id, ControllerManager *manager);
 
 		void UpdateState();
+		void ButtonEvent(SDL_ControllerButtonEvent event);
 
 		ControllerManager *manager;
 		int id;
+		QHash<ChiakiControllerButton, ChiakiControllerButton> mapping;
+		ChiakiControllerButton mapped(ChiakiControllerButton input) const;
 
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
 		SDL_GameController *controller;
@@ -89,8 +92,11 @@ class Controller : public QObject
 		QString GetName();
 		ChiakiControllerState GetState();
 
+		void SetMapping(const QHash<ChiakiControllerButton, ChiakiControllerButton> &map);
+
 	signals:
 		void StateChanged();
+		void ButtonPressed(ChiakiControllerButton);
 };
 
 #endif // CHIAKI_CONTROLLERMANAGER_H

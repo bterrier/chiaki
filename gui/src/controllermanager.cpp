@@ -96,21 +96,21 @@ void ControllerManager::HandleEvents()
 				break;
 			case SDL_CONTROLLERBUTTONUP:
 			case SDL_CONTROLLERBUTTONDOWN:
-				ControllerEvent(event.cbutton.which);
+			    ControllerEvent(event.cbutton);
 				break;
 			case SDL_CONTROLLERAXISMOTION:
-				ControllerEvent(event.caxis.which);
+			    //ControllerEvent(event.caxis.which);
 				break;
 		}
 	}
 #endif
 }
 
-void ControllerManager::ControllerEvent(int device_id)
+void ControllerManager::ControllerEvent(SDL_ControllerButtonEvent event)
 {
-	if(!open_controllers.contains(device_id))
-		return;
-	open_controllers[device_id]->UpdateState();
+	auto it = open_controllers.find(event.which);
+	if (it != open_controllers.end())
+	it.value()->ButtonEvent(event);
 }
 
 QList<int> ControllerManager::GetAvailableControllers()
@@ -168,6 +168,31 @@ void Controller::UpdateState()
 	emit StateChanged();
 }
 
+static ChiakiControllerButton sdl2chiaki(SDL_GameControllerButton sdlButton) {
+	switch (sdlButton) {
+	case SDL_CONTROLLER_BUTTON_A:
+		return CHIAKI_CONTROLLER_BUTTON_CROSS;
+	case SDL_CONTROLLER_BUTTON_B:
+		return CHIAKI_CONTROLLER_BUTTON_MOON;
+	case SDL_CONTROLLER_BUTTON_X:
+		return CHIAKI_CONTROLLER_BUTTON_BOX;
+	case SDL_CONTROLLER_BUTTON_Y:
+		return CHIAKI_CONTROLLER_BUTTON_PYRAMID;
+	}
+}
+
+void Controller::ButtonEvent(SDL_ControllerButtonEvent event)
+{
+	if (event.type == SDL_CONTROLLERBUTTONDOWN)
+		emit ButtonPressed(sdl2chiaki(SDL_GameControllerButton(event.button)));
+	UpdateState();
+}
+
+ChiakiControllerButton Controller::mapped(ChiakiControllerButton input) const
+{
+	return mapping.value(input, input);
+}
+
 bool Controller::IsConnected()
 {
 #ifdef CHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER
@@ -204,21 +229,21 @@ ChiakiControllerState Controller::GetState()
 	if(!controller)
 		return state;
 
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_A) ? CHIAKI_CONTROLLER_BUTTON_CROSS : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_B) ? CHIAKI_CONTROLLER_BUTTON_MOON : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_X) ? CHIAKI_CONTROLLER_BUTTON_BOX : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_Y) ? CHIAKI_CONTROLLER_BUTTON_PYRAMID : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT) ? CHIAKI_CONTROLLER_BUTTON_DPAD_LEFT : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ? CHIAKI_CONTROLLER_BUTTON_DPAD_RIGHT : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_UP) ? CHIAKI_CONTROLLER_BUTTON_DPAD_UP : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN) ? CHIAKI_CONTROLLER_BUTTON_DPAD_DOWN : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER) ? CHIAKI_CONTROLLER_BUTTON_L1 : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) ? CHIAKI_CONTROLLER_BUTTON_R1 : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK) ? CHIAKI_CONTROLLER_BUTTON_L3 : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK) ? CHIAKI_CONTROLLER_BUTTON_R3 : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START) ? CHIAKI_CONTROLLER_BUTTON_OPTIONS : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_BACK) ? CHIAKI_CONTROLLER_BUTTON_SHARE : 0;
-	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_GUIDE) ? CHIAKI_CONTROLLER_BUTTON_PS : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_A) ? mapped(CHIAKI_CONTROLLER_BUTTON_CROSS) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_B) ? mapped(CHIAKI_CONTROLLER_BUTTON_MOON) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_X) ? mapped(CHIAKI_CONTROLLER_BUTTON_BOX) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_Y) ? mapped(CHIAKI_CONTROLLER_BUTTON_PYRAMID) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_LEFT) ? mapped(CHIAKI_CONTROLLER_BUTTON_DPAD_LEFT) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ? mapped(CHIAKI_CONTROLLER_BUTTON_DPAD_RIGHT) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_UP) ? mapped(CHIAKI_CONTROLLER_BUTTON_DPAD_UP) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_DOWN) ? mapped(CHIAKI_CONTROLLER_BUTTON_DPAD_DOWN) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_LEFTSHOULDER) ? mapped(CHIAKI_CONTROLLER_BUTTON_L1) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) ? mapped(CHIAKI_CONTROLLER_BUTTON_R1) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_LEFTSTICK) ? mapped(CHIAKI_CONTROLLER_BUTTON_L3) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_RIGHTSTICK) ? mapped(CHIAKI_CONTROLLER_BUTTON_R3) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START) ? mapped(CHIAKI_CONTROLLER_BUTTON_OPTIONS) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_BACK) ? mapped(CHIAKI_CONTROLLER_BUTTON_TOUCHPAD) : 0;
+	state.buttons |= SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_GUIDE) ? mapped(CHIAKI_CONTROLLER_BUTTON_PS) : 0;
 	state.l2_state = (uint8_t)(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERLEFT) >> 7);
 	state.r2_state = (uint8_t)(SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT) >> 7);
 	state.left_x = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
@@ -228,4 +253,9 @@ ChiakiControllerState Controller::GetState()
 
 #endif
 	return state;
+}
+
+void Controller::SetMapping(const QHash<ChiakiControllerButton, ChiakiControllerButton> &map)
+{
+	mapping = map;
 }

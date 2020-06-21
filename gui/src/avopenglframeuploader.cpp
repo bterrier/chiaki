@@ -29,7 +29,7 @@ AVOpenGLFrameUploader::AVOpenGLFrameUploader(VideoDecoder *decoder, AVOpenGLWidg
 	context(context),
 	surface(surface)
 {
-	connect(decoder, SIGNAL(FramesAvailable()), this, SLOT(UpdateFrame()));
+	connect(decoder, &VideoDecoder::FramesAvailable, this, &AVOpenGLFrameUploader::UpdateFrame);
 }
 
 void AVOpenGLFrameUploader::UpdateFrame()

@@ -17,6 +17,7 @@
 
 #include <settingsdialog.h>
 #include <settings.h>
+#include <settingsgamepadcapturedialog.h>
 #include <settingskeycapturedialog.h>
 #include <registdialog.h>
 #include <sessionlog.h>
@@ -158,7 +159,8 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) : QDialog(pa
 	hardware_decode_combo_box = new QComboBox(this);
 	static const QList<QPair<HardwareDecodeEngine, const char *>> hardware_decode_engines = {
 		{ HW_DECODE_NONE, "none"},
-		{ HW_DECODE_VAAPI, "vaapi"}
+	    { HW_DECODE_VAAPI, "vaapi"},
+	    { HW_DECODE_VDPAU, "vdpau"}
 	};
 	auto current_hardware_decode_engine = settings->GetHardwareDecodeEngine();
 	for(const auto &p : hardware_decode_engines)
@@ -206,16 +208,25 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) : QDialog(pa
 	key_horizontal->addLayout(key_left_form);
 	key_horizontal->addLayout(key_right_form);
 
-	QMap<int, Qt::Key> key_map = this->settings->GetControllerMapping();
+	const QMap<int, Qt::Key> key_map = this->settings->GetControllerMapping();
 
 	int i = 0;
-	for(auto it = key_map.begin(); it != key_map.end(); ++it, ++i)
+	for(auto it = key_map.constBegin(); it != key_map.constEnd(); ++it, ++i)
 	{
 		int chiaki_button = it.key();
 		auto button = new QPushButton(QKeySequence(it.value()).toString(), this);
 		button->setAutoDefault(false);
+
+		auto padButton = new QPushButton(Settings::GetChiakiControllerButtonName(chiaki_button), this);
+		padButton->setAutoDefault(false);
+		padButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+		auto layout = new QHBoxLayout(this);
+		layout->addWidget(button);
+		layout->addWidget(padButton);
+
 		auto form = i % 2 ? key_left_form : key_right_form;
-		form->addRow(Settings::GetChiakiControllerButtonName(chiaki_button), button);
+		form->addRow(Settings::GetChiakiControllerButtonName(chiaki_button), layout);
 		// Launch key capture dialog on clicked event
 		connect(button, &QPushButton::clicked, this, [this, chiaki_button, button](){
 			auto dialog = new SettingsKeyCaptureDialog(this);
@@ -224,6 +235,16 @@ SettingsDialog::SettingsDialog(Settings *settings, QWidget *parent) : QDialog(pa
 						button->setText(QKeySequence(key).toString());
 						this->settings->SetControllerButtonMapping(chiaki_button, key);
 					});
+			dialog->exec();
+		});
+
+		connect(padButton, &QPushButton::clicked, this, [this, chiaki_button, padButton](){
+			auto dialog = new SettingsGamepadCaptureDialog(this);
+			// Store captured key to settings and change button label on KeyCaptured event
+			connect(dialog, &SettingsGamepadCaptureDialog::ButtonCaptured, padButton, [this, padButton, chiaki_button](ChiakiControllerButton key){
+				        padButton->setText(Settings::GetChiakiControllerButtonName(key));
+						//this->settings->SetControllerButtonMapping(chiaki_button, key);
+			        });
 			dialog->exec();
 		});
 	}

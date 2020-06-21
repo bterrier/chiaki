@@ -289,7 +289,7 @@ void StreamSession::SendFeedbackState()
 		state.buttons |= gamepad->buttonL3() ? CHIAKI_CONTROLLER_BUTTON_L3 : 0;
 		state.buttons |= gamepad->buttonR3() ? CHIAKI_CONTROLLER_BUTTON_R3 : 0;
 		state.buttons |= gamepad->buttonStart() ? CHIAKI_CONTROLLER_BUTTON_OPTIONS : 0;
-		state.buttons |= gamepad->buttonSelect() ? CHIAKI_CONTROLLER_BUTTON_SHARE : 0;
+		state.buttons |= gamepad->buttonSelect() ? CHIAKI_CONTROLLER_BUTTON_TOUCHPAD : 0;
 		state.buttons |= gamepad->buttonGuide() ? CHIAKI_CONTROLLER_BUTTON_PS : 0;
 		state.l2_state = (uint8_t)(gamepad->buttonL2() * 0xff);
 		state.r2_state = (uint8_t)(gamepad->buttonR2() * 0xff);
